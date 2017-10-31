@@ -115,6 +115,3 @@ pip-selfcheck.json
 *.iml
 out
 gen
-/myemoticon/db.sqlite3
-/myemoticon/spiders/log/
-/myemoticon/emoticon/migrations/
