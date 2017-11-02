@@ -1,1 +1,1 @@
-# ManuaContentCoverage
+# doc analysis scripts backup
