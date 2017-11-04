@@ -16,15 +16,17 @@ class ResultBuilder:
     def save_all_result(self):
         save_general_result = self.save_result_abs(self.general_result_file,
                                                    self.raw_para_data,
-                                                   self.get_general_result_by_key)
+                                                   self.get_general_results_by_key)
 
     @staticmethod
     def save_result_abs(filename, keys, get_by_key):
         import codecs
         f = codecs.open(filename, 'w', 'utf_8_sig')
         for key in keys:
-            r = '|'.join(get_by_key(key))
-            f.write(r + '\n')
+            r = get_by_key(key)
+            for entry in r:
+                line = '|'.join(entry)
+                f.write(line + '\n')
         f.close()
         return True
 
@@ -52,7 +54,7 @@ class ResultBuilder:
         return return_val
 
 
-    def get_general_result_by_key(self, key):
+    def get_general_results_by_key(self, key):
         para_prop_list = self.raw_para_data[key]
         sent_prop_list = self.raw_sentence_data[key]
         hashed_para_prop_list = [";".join([str(i) for i in para]) for para in para_prop_list]
@@ -70,7 +72,7 @@ class ResultBuilder:
         sent_stat = self.lst_to_stat(hashed_sent_prop_list, 5, 'S')
         para_stat = self.lst_to_stat(hashed_para_prop_list, 5, 'P')
 
-        return map(str, [self.doc_name,
+        return [map(str, [self.doc_name,
                          style_id,
                          level,
                          sent_prop_homogeneity,
@@ -78,7 +80,7 @@ class ResultBuilder:
                          sent_count,
                          para_count,
                          sent_stat,
-                         para_stat,])
+                         para_stat,])]
 
 
     def lst_to_stat(self, lst, n, key_prefix='k'):
@@ -113,16 +115,16 @@ class ResultBuilder:
 
 
 class ResultBuilderTestCase(unittest.TestCase):
-    def test_get_general_result_by_key(self):
+    def test_get_general_results_by_key(self):
         doc_name = "1.doc"
         raw_sentence_data = {(1, 2):[['bi', 1, False], ['b', 3, True], ['b', 3, True], ['i', 3, True], ['i', 5, True], ['i', 6, True], ['i', 7, True]],
                              (3, 5):[['i', 5, True]],}
         raw_para_data = {(1, 2):[['bi', 1, False], ['bi', 1, False], ['bi', 1, False], ['bi', 1, False]],
                              (3, 5):[['i', 5, True]],}
         rb = ResultBuilder(doc_name, raw_sentence_data, raw_para_data, '')
-        # s = rb.get_general_result_by_key((1, 2))
-        # self.assertEqual(s, ['1.doc', '1', '2', '0', '1', '7', '4', 'S1:0.2857;S2:0.1429;S3:0.1429;S4:0.1429;S5:0.1429', 'P1:1.0000'])
-        rb.get_sent_para_results_by_key((1, 2), rb.raw_para_data)
+        s = rb.get_general_results_by_key((1, 2))
+        self.assertEqual(s, [['1.doc', '1', '2', '0', '1', '7', '4', 'S1:0.2857;S2:0.1429;S3:0.1429;S4:0.1429;S5:0.1429', 'P1:1.0000']])
+        # rb.get_sent_para_results_by_key((1, 2), rb.raw_para_data)
 
     def test_order_dic_by_value(self):
         a = {'c':1, 'a':2, 'b':3}
@@ -152,7 +154,7 @@ class ResultBuilderTestCase(unittest.TestCase):
     #     raw_para_data = {(1, 2):[['bi', 1, False], ['bi', 1, False], ['bi', 1, False], ['bi', 1, False]],
     #                          (3, 5):[['i', 5, True]],}
     #     rb = ResultBuilder(doc_name, raw_sentence_data, raw_para_data, '')
-    #     r = rb.save_result_abs('D:/TMP/g.txt', rb.raw_para_data.keys(), rb.get_general_result_by_key)
+    #     r = rb.save_result_abs('D:/TMP/g.txt', rb.raw_para_data.keys(), rb.get_general_results_by_key)
 
 
 
