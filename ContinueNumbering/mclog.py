@@ -24,8 +24,9 @@ class MCLog:
 
         from collections import defaultdict
         range_list_of_level = defaultdict(list)
-        for style_id, level, begin, end in level_range_pair_list:
-            range_list_of_level[(style_id, level)].append((begin, end))
+        for style_id, level, begin, end, contains_numbering in level_range_pair_list:
+            if contains_numbering:
+                range_list_of_level[(style_id, level)].append((begin, end))
 
         return range_list_of_level
 
@@ -36,16 +37,17 @@ class MCLog:
         level = int(l[2])
         range_begin = int(l[-2])
         range_end = int(l[-1])
-        return [style_id, level, range_begin, range_end]
+        contains_numbering = False if l[4] == '0' else True
+        return [style_id, level, range_begin, range_end, contains_numbering]
 
 
 
 class MCLogTestCase(unittest.TestCase):
     def test_parse_mclog_line(self):
         r = MCLog.parse_mclog_line(u"12|元糖糖糖|1|1|0|230|1|0|1|0|440|0|0|0|336|341")
-        self.assertEqual(r, ['0', 1, 336, 341])
-        r = MCLog.parse_mclog_line("10|Afsdafdrtasrg、、|2|0.9997|0|230|15|65|1|0|440|0|0|0|319|335")
-        self.assertEqual(r, ['0', 2, 319, 335])
+        self.assertEqual(r, ['0', 1, 336, 341, False])
+        r = MCLog.parse_mclog_line("10|Afsdafdrtasrg、、|2|0.9997|1|230|15|65|1|0|440|0|0|0|319|335")
+        self.assertEqual(r, ['0', 2, 319, 335, True])
 
     def test_parse_mclog(self):
         dic = MCLog.parse_mclog(MCLog.parse_mclog_line, "d:/tmp/log.txt")

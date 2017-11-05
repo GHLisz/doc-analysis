@@ -17,44 +17,50 @@ class ResultBuilder:
         save_general_result = self.save_result_abs(self.general_result_file,
                                                    self.raw_para_data,
                                                    self.get_general_results_by_key)
+        save_sent_result = self.save_result_abs(self.sentence_result_file,
+                                                self.raw_sentence_data,
+                                                self.get_sent_para_results_by_key,
+                                                'S')
+        save_para_result = self.save_result_abs(self.paragraph_result_file,
+                                                self.raw_para_data,
+                                                self.get_sent_para_results_by_key,
+                                                'P')
+        return all([save_general_result, save_sent_result, save_para_result])
 
     @staticmethod
-    def save_result_abs(filename, keys, get_by_key):
+    def save_result_abs(filename, raw_data, get_by_key, key_prefix='k'):
         import codecs
         f = codecs.open(filename, 'w', 'utf_8_sig')
-        for key in keys:
-            r = get_by_key(key)
+        for key in raw_data.keys():
+            r = get_by_key(key, raw_data, key_prefix)
             for entry in r:
                 line = '|'.join(entry)
                 f.write(line + '\n')
         f.close()
         return True
 
-    def get_sent_para_results_by_key(self, key, raw_data):
+    def get_sent_para_results_by_key(self, key, raw_data, key_prefix='k'):
         prop_list = raw_data[key]
         hashed_prop_list = [";".join([str(i) for i in p]) for p in prop_list]
         occurrence = self.count_occurrence(hashed_prop_list)
         ordered_value = self.order_dic_by_value(occurrence)
 
-        style_id = key[0]
-        level = key[1]
+        style_id, level = key
         idx = 1
         return_val = []
         for v in ordered_value:
-            props = v[0]
-            cnt = v[1]
+            props, cnt = v
             return_val.append(map(str, [self.doc_name,
                                         style_id,
                                         level,
-                                        idx,
+                                        (key_prefix + str(idx)),
                                         props,
                                         cnt]))
             idx += 1
-        print return_val
         return return_val
 
 
-    def get_general_results_by_key(self, key):
+    def get_general_results_by_key(self, key, raw_data=None, key_prefix='k'):
         para_prop_list = self.raw_para_data[key]
         sent_prop_list = self.raw_sentence_data[key]
         hashed_para_prop_list = [";".join([str(i) for i in para]) for para in para_prop_list]
@@ -62,8 +68,7 @@ class ResultBuilder:
         para_prop_set = set(hashed_para_prop_list)
         sent_prop_set = set(hashed_sent_prop_list)
 
-        style_id = key[0]
-        level = key[1]
+        style_id, level = key
         sent_prop_homogeneity = 1 if len(sent_prop_set) == 1 else 0
         para_prop_homogeneity = 1 if len(para_prop_set) == 1 else 0
         sent_count = len(sent_prop_list)
@@ -115,16 +120,28 @@ class ResultBuilder:
 
 
 class ResultBuilderTestCase(unittest.TestCase):
-    def test_get_general_results_by_key(self):
+    def setUp(self):
         doc_name = "1.doc"
         raw_sentence_data = {(1, 2):[['bi', 1, False], ['b', 3, True], ['b', 3, True], ['i', 3, True], ['i', 5, True], ['i', 6, True], ['i', 7, True]],
                              (3, 5):[['i', 5, True]],}
         raw_para_data = {(1, 2):[['bi', 1, False], ['bi', 1, False], ['bi', 1, False], ['bi', 1, False]],
                              (3, 5):[['i', 5, True]],}
-        rb = ResultBuilder(doc_name, raw_sentence_data, raw_para_data, '')
-        s = rb.get_general_results_by_key((1, 2))
+        self.rb = ResultBuilder(doc_name, raw_sentence_data, raw_para_data, 'D:/TMP/')
+
+    def test_get_sent_para_results_by_key(self):
+        para_r = self.rb.get_sent_para_results_by_key((1, 2), self.rb.raw_para_data)
+        self.assertEqual(para_r, [['1.doc', '1', '2', 'k1', 'bi;1;False', '4']])
+        sent_r = self.rb.get_sent_para_results_by_key((1, 2), self.rb.raw_sentence_data)
+        self.assertEqual(sent_r, [['1.doc', '1', '2', 'k1', 'b;3;True', '2'],
+                                  ['1.doc', '1', '2', 'k2', 'i;6;True', '1'],
+                                  ['1.doc', '1', '2', 'k3', 'i;3;True', '1'],
+                                  ['1.doc', '1', '2', 'k4', 'bi;1;False', '1'],
+                                  ['1.doc', '1', '2', 'k5', 'i;7;True', '1'],
+                                  ['1.doc', '1', '2', 'k6', 'i;5;True', '1']])
+
+    def test_get_general_results_by_key(self):
+        s = self.rb.get_general_results_by_key((1, 2))
         self.assertEqual(s, [['1.doc', '1', '2', '0', '1', '7', '4', 'S1:0.2857;S2:0.1429;S3:0.1429;S4:0.1429;S5:0.1429', 'P1:1.0000']])
-        # rb.get_sent_para_results_by_key((1, 2), rb.raw_para_data)
 
     def test_order_dic_by_value(self):
         a = {'c':1, 'a':2, 'b':3}
@@ -147,16 +164,8 @@ class ResultBuilderTestCase(unittest.TestCase):
         b = func(a, 2, 'p')
         self.assertEqual(b, 'p1:0.5000;p2:0.3333')
 
-    # def test_save_result_abs(self):
-    #     doc_name = "1.doc"
-    #     raw_sentence_data = {(1, 2):[['bi', 1, False], ['b', 3, True], ['b', 3, True], ['i', 3, True], ['i', 5, True], ['i', 6, True], ['i', 7, True]],
-    #                          (3, 5):[['i', 5, True]],}
-    #     raw_para_data = {(1, 2):[['bi', 1, False], ['bi', 1, False], ['bi', 1, False], ['bi', 1, False]],
-    #                          (3, 5):[['i', 5, True]],}
-    #     rb = ResultBuilder(doc_name, raw_sentence_data, raw_para_data, '')
-    #     r = rb.save_result_abs('D:/TMP/g.txt', rb.raw_para_data.keys(), rb.get_general_results_by_key)
-
-
+    def test_save_all_result(self):
+        r = self.rb.save_all_result()
 
 
 if __name__ == '__main__':

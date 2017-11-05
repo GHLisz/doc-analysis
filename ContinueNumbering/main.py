@@ -3,19 +3,19 @@ import os
 import sys
 from mclog import MCLog
 from doc import Doc
+from result_builder import ResultBuilder
 
 
 def main():
-    doc_name = sys.argv[1]
-    doc_name = doc_name.decode('gbk')
-    file_name = os.path.basename(doc_name)
-    result_file_path = r'E:\V8AutoTest\SAK\Results\ResultFile' + "\\" + file_name + '.txt'
+    doc_full_name = sys.argv[1]
+    doc_full_name = doc_full_name.decode('gbk')
+    doc_name = os.path.basename(doc_full_name)
+    result_path = r'E:\V8AutoTest\SAK\Results\ResultFile'
 
     range_list_of_level = MCLog("E:/V8AutoTest/log.txt").range_list_of_level
-    doc = Doc()
-    doc.save_result(range_list_of_level,
-                    doc_name.replace(r"E:\V8AutoTest\SAK\cases" + '\\', ''),
-                    result_file_path)
+    doc = Doc(range_list_of_level)
+    rb = ResultBuilder(doc_name, doc.raw_sentence_data, doc.raw_para_data,result_path)
+    rb.save_all_result()
 
 
 if __name__ == '__main__':
