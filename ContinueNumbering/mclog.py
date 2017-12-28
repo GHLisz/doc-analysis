@@ -21,11 +21,12 @@ class MCLog:
     def parse_mclog(parse_mclog_line, log_path):
         f = open(log_path)
         level_range_pair_list = [parse_mclog_line(line) for line in f.readlines()]
+        f.close()
 
         from collections import defaultdict
         range_list_of_level = defaultdict(list)
         for style_id, level, begin, end, contains_numbering in level_range_pair_list:
-            if contains_numbering:
+            if contains_numbering and style_id != '0':
                 range_list_of_level[(style_id, level)].append((begin, end))
 
         return range_list_of_level

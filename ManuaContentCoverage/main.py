@@ -1,40 +1,40 @@
+import os
 from doc import Doc
+from entry_comparer import EntryComparer
 
-class Foo:
-    def __init__(self, s=None):
-        self.s = s
-        self.e = None
-        print "init"
+def main():
+    doc_full_name = sys.argv[1]
+    doc_full_name = doc_full_name.decode('gbk')
+    doc_name = os.path.basename(doc_full_name)
+    result_path = r'E:\V8AutoTest\SAK\Results\ResultFiles'
+    result_file = result_path + '\\' + doc_name + '.txt'
 
-    def __str__(self):
-        return str(self.s)
-
-    def p(self, a):
-        print str(a)
-        return True
-
-    @staticmethod
-    def is_entry_intersect(base_entry, test_entry):
-        return base_entry == test_entry
-
-    # need revision
-    def compare(self, base_entries, test_entries):
-        # return true if base_entries contains all test_entries
-        return all(self.is_entry_intersect(base_entry, test_entry)
-                   for test_entry in test_entries
-                   for base_entry in base_entries)
+    doc = Doc()
+    ec = EntryComparer(doc.manual_content_entries, doc.toc_entries)
+    if ec.compare():
+        result = 'True' # + '\n' + 'No memory leaks detected.'
+    else:
+        result = 'False' # + '\n' + 'WARNING: Visual Leak Detector detected memory leaks!'
 
 
+    import codecs
+    f = codecs.open(result_file, 'w', 'utf_8_sig')
+    f.write(result + '\n')
+    f.write('diff_entries: \n')
+    for entry in ec.diff_info():
+        f.write(str(entry) + '\n')
+    f.write('TOC_entries: \n')
+    for entry in ec.test_entries:
+        f.write(str(entry) + '\n')
+    f.write('MC_entries: \n')
+    for entry in ec.base_entries:
+        f.write(str(entry) + '\n')
+    f.close()
 
 if __name__ == '__main__':
-    # import sys
-    # reload(sys)
-    # sys.setdefaultencoding('utf-8')
-    #
-    # doc = Doc()
-    # doc.stuff_entries()
-    a = [1,2]
-    b = [1,2,4]
-    func = Foo().compare
-    print func(b, a)
+    import sys
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+
+    main()
 

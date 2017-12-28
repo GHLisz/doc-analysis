@@ -18,8 +18,15 @@ def main():
     rb.save_all_result()
 
 
+def verify():
+    range_list_of_level = MCLog("D:\Downloads\log.txt").range_list_of_level
+    print range_list_of_level
+    doc = Doc(range_list_of_level)
+
+
 if __name__ == '__main__':
     reload(sys)
     sys.setdefaultencoding('utf-8')
 
     main()
+    # verify()

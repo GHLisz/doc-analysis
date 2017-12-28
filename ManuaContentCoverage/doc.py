@@ -11,7 +11,8 @@ class Doc:
         self.toc_range = self.get_toc_range()
         self.manual_content_entries = self.get_bookmarks_in_range(self.manual_content_range)
         self.toc_entries = self.get_bookmarks_in_range(self.toc_range)
-
+        self.stuff_mc_entries()
+        self.stuff_toc_entries()
 
     def get_bookmarks_in_range(self, wrange):
         app, doc = self.app, self.doc
@@ -46,15 +47,9 @@ class Doc:
         app, doc = self.app, self.doc
         contains_cn = CharSetUtil().contains_cn
 
-
-        # print "manual_content_entries----------------"
-        # for entry in self.manual_content_entries:
-        #     print entry
-
         para_idx = 0
         for para in doc.Paragraphs:
             para_idx += 1
-            print para.Range.Text
 
             para_outline_level = para.OutlineLevel
             if para_outline_level == 10:
@@ -66,12 +61,10 @@ class Doc:
                               or (b in [e.bookmark_name for e in self.toc_entries]))]
 
             if not used_bookmarks:
-                print "no bkmk-----------------------"
                 continue
 
             if not contains_cn(para.Range.Text):
                 continue
-
 
             for bookmark in used_bookmarks:
                 for entry in self.manual_content_entries:
@@ -81,15 +74,54 @@ class Doc:
                     if bookmark == entry.bookmark_name:
                         entry.append_paragraph_outline_level((para_idx, para_outline_level))
 
-        # print
-        print "manual_content_entries----------------"
-        for entry in self.manual_content_entries:
-            print entry
-        print "toc_entries----------------"
-        for entry in self.toc_entries:
-            print entry
+    def stuff_mc_entries(self):
+        app, doc = self.app, self.doc
 
+        para_idx = 0
+        for para in doc.Paragraphs:
+            para_idx += 1
+            para_outline_level = para.OutlineLevel
 
+            bookmarks = [b.name for b in para.Range.Bookmarks]
+            used_bookmarks = [b for b in bookmarks if (
+                              (b in [e.bookmark_name for e in self.manual_content_entries])
+                              )]
+
+            if not used_bookmarks:
+                continue
+
+            for bookmark in used_bookmarks:
+                for entry in self.manual_content_entries:
+                    if bookmark == entry.bookmark_name:
+                        entry.append_paragraph_outline_level((para_idx, para_outline_level))
+
+    def stuff_toc_entries(self):
+        app, doc = self.app, self.doc
+        contains_cn = CharSetUtil().contains_cn
+
+        para_idx = 0
+        for para in doc.Paragraphs:
+            para_idx += 1
+
+            para_outline_level = para.OutlineLevel
+            if para_outline_level == 10:
+                continue
+
+            bookmarks = [b.name for b in para.Range.Bookmarks]
+            used_bookmarks = [b for b in bookmarks if (
+                              (b in [e.bookmark_name for e in self.toc_entries])
+                            )]
+
+            if not used_bookmarks:
+                continue
+
+            if not contains_cn(para.Range.Text):
+                continue
+
+            for bookmark in used_bookmarks:
+                for entry in self.toc_entries:
+                    if bookmark == entry.bookmark_name:
+                        entry.append_paragraph_outline_level((para_idx, para_outline_level))
 
     @staticmethod
     def get_app_and_doc():
